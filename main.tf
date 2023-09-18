@@ -13,6 +13,8 @@ resource "azurerm_resource_group" "rg" {
   }
 }
 
+data "azurerm_client_config" "example" {}
+
 resource "random_pet" "azurerm_container_registry_name" {
   prefix = "acr"
 }
@@ -28,4 +30,10 @@ resource "azurerm_container_registry" "demoacr" {
     "Purpose" = "Learning"
     "Type" = "ACR"
   }
+}
+
+resource "azurerm_role_assignment" "example" {
+  scope                = azurerm_container_registry.demoacr.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_client_config.example.object_id
 }
