@@ -1,0 +1,53 @@
+configuration:
+  resourceGroupLocation:
+    type: string
+    default: eastus
+  resourceGroupNamePrefix:
+    type: string
+    default: rg
+resources:
+  # Generate random resource group name
+  rg_name:
+    type: random:RandomPet
+    properties:
+      prefix: ${resourceGroupNamePrefix}
+  rg:
+    type: azure:core:ResourceGroup
+    properties:
+      location: ${resourceGroupLocation}
+      name: ${rg_name.id}
+      tags:
+        Owner: Alim
+        Purpose: Learning
+        Type: RG
+  azurerm_container_registry_name:
+    type: random:RandomPet
+    properties:
+      prefix: acr
+      separator: ""
+  demoacr:
+    type: azure:containerservice:Registry
+    properties:
+      name: ${azurerm_container_registry_name.id}
+      resourceGroupName: ${rg.name}
+      location: ${rg.location}
+      sku: Standard
+      adminEnabled: true ## Set to false if using with Managed Identity
+      tags:
+        Owner: Alim
+        Purpose: Learning
+        Type: ACR
+  roleassign:
+    type: azure:authorization:Assignment
+    properties:
+      scope: ${demoacr.id}
+      roleDefinitionName: Contributor
+      principalId: ${example.objectId}
+variables:
+  example:
+    fn::invoke:
+      function: azure:core:getClientConfig
+      arguments: {}
+outputs:
+  adminPassword: ${demoacr.adminPassword}
+  containerRegistry: ${demoacr.loginServer}
